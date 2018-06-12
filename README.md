@@ -1,5 +1,7 @@
 # tweet-media-archive
 
+Requires Python 3.6.x and BeautifulSoup4.
+
 ```
 $ python tweet_media_archive.py -h | fold -sw 80
 usage: tweet_media_archive.py [-h] [--debug] -u USERNAME [--exclude_video]
@@ -54,6 +56,16 @@ https://pbs.twimg.com/media/DenYDMDVMAMJ70B.jpg:orig
 https://pbs.twimg.com/media/DenKVHeU0AA9XFO.jpg:orig
 https://pbs.twimg.com/media/DeSdVITVMAE9qCQ.jpg:orig
 ```
+
+
+### Thanks
+
+- To the following resources, so I did not have to crack my head on decoding how twitter works on browser.
+    - https://github.com/anuragrana/Python-Scripts/blob/master/tweets_scrapper.py
+    - https://github.com/Foo-Manroot/tweet-feed/blob/master/scraper.py
+    - https://foo-manroot.github.io/post/scraping/twitter/2017/09/05/scraping-twitter.html
+- For the post that started it all.
+    - https://archive.rebeccablacktech.com/g/thread/66258138
 
 
 ### License
