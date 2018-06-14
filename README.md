@@ -4,18 +4,18 @@ Requires Python 3.6.x and BeautifulSoup4.
 
 ```
 $ python tweet_media_archive.py -h | fold -sw 80
-usage: tweet_media_archive.py [-h] [--debug] -u USERNAME [--exclude_video]
+usage: tweet_media_archive.py [-h] [--debug] -u USERNAME [--exclude_gif]
                               [--exclude_image] [-o OUTPUT]
                               [--min_datetime MIN_DATETIME]
                               [--max_datetime MAX_DATETIME]
 
-Gets a list of URLs for images and videos of a twitter user. The URL list can
+Gets a list of URLs for images and GIFs of a twitter user. The URL list can
 then be passed to curl or wget to batch download. To note, twitter only allows
 a maximum of 35 iterations, which means probably not everything will be
 archived.
 
 Examples:
-- List all videos by user "tkmiz" from now until 28 Dec 2017, 10.34pm
+- List all GIFs by user "tkmiz" from now until 28 Dec 2017, 10.34pm
   ./tweet_media_archive.py -u tkmiz --exclude_image --min_datetime="2017-12-28
 22:34:00"
 
@@ -25,11 +25,11 @@ Examples:
 optional arguments:
   -h, --help            show this help message and exit
   --debug               Enables debug mode, which prints out the results in a
-CSV format of "{tweet date time}, {tweet id}, {image/video url}" for debugging
+CSV format of "{tweet date time}, {tweet id}, {image/GIF url}" for debugging
 purposes.
   -u USERNAME, --username USERNAME
                         twitter username.
-  --exclude_video       Excludes videos from the result.
+  --exclude_gif         Excludes GIFs from the result.
   --exclude_image       Excludes images from the result.
   -o OUTPUT, --output OUTPUT
                         Directs output to a file. If unspecified, the output
