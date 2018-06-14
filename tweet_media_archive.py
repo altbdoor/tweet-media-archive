@@ -49,15 +49,15 @@ class TweetWrapper(object):
 
         return url_list
 
-    def get_all_video_url(self):
+    def get_all_gif_url(self):
         url_list = []
-        videos = self.soup.select('div.PlayableMedia-player')
+        gifs = self.soup.select('div.PlayableMedia-player')
 
-        for v in videos:
-            v_id = re.search(self.background_image_id_re, v.get('style'))
-            if v_id:
-                v_id = v_id.group(1)
-                url_list.append(f'https://video.twimg.com/tweet_video/{v_id}.mp4')
+        for g in gifs:
+            g_id = re.search(self.background_image_id_re, g.get('style'))
+            if g_id:
+                g_id = g_id.group(1)
+                url_list.append(f'https://video.twimg.com/tweet_video/{g_id}.mp4')
 
         return url_list
 
@@ -66,7 +66,7 @@ class TweetWrapper(object):
 
 def run_scrape(
     debug=False, username='',
-    exclude_video=False, exclude_image=False,
+    exclude_gif=False, exclude_image=False,
     output=None,
     min_datetime=None, max_datetime=None,
 ):
@@ -146,10 +146,10 @@ def run_scrape(
                         timestamp=tweet_wrapper.get_formatted_timestamp(),
                     )
 
-                if not exclude_video:
-                    videos = tweet_wrapper.get_all_video_url()
+                if not exclude_gif:
+                    gifs = tweet_wrapper.get_all_gif_url()
                     dump_to_output(
-                        videos,
+                        gifs,
                         debug=debug,
                         id=tweet_wrapper.id,
                         timestamp=tweet_wrapper.get_formatted_timestamp(),
@@ -171,13 +171,13 @@ def run_scrape(
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            'Gets a list of URLs for images and videos of a twitter user. '
+            'Gets a list of URLs for images and GIFs of a twitter user. '
             'The URL list can then be passed to curl or wget to batch download. '
             'To note, twitter only allows a maximum of 35 iterations, which means '
             'probably not everything will be archived.'
             '\n\n'
             'Examples: \n'
-            '- List all videos by user "tkmiz" from now until 28 Dec 2017, 10.34pm \n'
+            '- List all GIFs by user "tkmiz" from now until 28 Dec 2017, 10.34pm \n'
             '  ./%(prog)s -u tkmiz --exclude_image --min_datetime="2017-12-28 22:34:00" \n'
             '\n'
             '- List everything by user "MowtenDoo" and save it to a text file \n'
@@ -189,7 +189,7 @@ def parse_args():
         '--debug', action='store_true',
         help=(
             'Enables debug mode, which prints out the results in a CSV format of '
-            '"{tweet date time}, {tweet id}, {image/video url}" for debugging purposes.'
+            '"{tweet date time}, {tweet id}, {image/GIF url}" for debugging purposes.'
         ),
     )
     parser.add_argument(
@@ -198,8 +198,8 @@ def parse_args():
     )
 
     parser.add_argument(
-        '--exclude_video', action='store_true',
-        help='Excludes videos from the result.',
+        '--exclude_gif', action='store_true',
+        help='Excludes GIFs from the result.',
     )
     parser.add_argument(
         '--exclude_image', action='store_true',
