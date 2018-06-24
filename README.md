@@ -1,18 +1,28 @@
 # tweet-media-archive
 
-Requires Python 3.6.x and BeautifulSoup4.
+Requires [Python 3.6.x](https://www.python.org/),
+[BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
+and optionally [Selenium-Python](https://www.seleniumhq.org/).
 
 ```
 $ python tweet_media_archive.py -h | fold -sw 80
 usage: tweet_media_archive.py [-h] [--debug] -u USERNAME [--exclude_gif]
                               [--exclude_image] [-o OUTPUT]
                               [--min_datetime MIN_DATETIME]
-                              [--max_datetime MAX_DATETIME]
+                              [--max_datetime MAX_DATETIME] [--include_video]
+                              [--engine_driver_type {chrome,firefox}]
+                              [--binary_path BINARY_PATH]
+                              [--driver_path DRIVER_PATH]
 
-Gets a list of URLs for images and GIFs of a twitter user. The URL list can
-then be passed to curl or wget to batch download. To note, twitter only allows
-a maximum of 35 iterations, which means probably not everything will be
-archived.
+Gets a list of URLs for images, GIFs and possibly videos of a twitter user. The
+URL list can then be passed to curl or wget to batch download. To note, twitter
+only allows a maximum of 35 iterations, which means probably not everything
+will be archived.
+
+The script is only able to scrape for videos with the help of a web browser,
+and Selenium web driver, which means you need to have either Google
+Chrome/Chromium or Mozilla Firefox installed, and also their respective
+WebDrivers.
 
 Examples:
 - List all GIFs by user "tkmiz" from now until 28 Dec 2017, 10.34pm
@@ -21,6 +31,11 @@ Examples:
 
 - List everything by user "MowtenDoo" and save it to a text file
   ./tweet_media_archive.py -u Mowtendoo -o example.txt
+
+- List only videos by user "Mowtendoo" with Chrome.
+  ./tweet_media_archive.py -u Mowtendoo --exclude_image --exclude_gif
+--include_video --engine_driver_type=chrome --binary_path="C:\Program Files
+(x86)\Google\Application\chrome.exe" --driver_path=".\drivers\chromedriver.exe"
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -38,7 +53,36 @@ will be redirected to stdout.
                         Minimum date. Format: YYYY-MM-DD hh:mm:ss
   --max_datetime MAX_DATETIME
                         Maximum date. Format: YYYY-MM-DD hh:mm:ss
+  --include_video       Includes videos from the result.
+  --engine_driver_type {chrome,firefox}
+                        The engine driver type. Defaults to "chrome".
+  --binary_path BINARY_PATH
+                        The binary path to the browser executable.
+  --driver_path DRIVER_PATH
+                        The driver path to the browser driver executable.
 ```
+
+
+### Video support notes
+
+The script is able to scrape for twitter videos with the help of Selenium, but
+you have to set up:
+
+- A web browser
+    - [Google Chrome v59 and above](https://developers.google.com/web/updates/2017/04/headless-chrome)
+    - [Chromium v59 and above](https://chromium.woolyss.com/) works too
+    - [Mozilla Firefox v56 and above](https://developer.mozilla.org/en-US/Firefox/Headless_mode)
+- The browser's WebDriver
+    - [ChromeDriver](https://sites.google.com/a/chromium.org/chromedriver/home) for Chrome or Chromium
+    - [GeckoDriver](https://github.com/mozilla/geckodriver/) for Firefox
+
+I have personally tested on Windows 10, Python 3.6.5 with Mozilla Firefox
+v60.0.2 and Chromium v66.0.3359.117. It works, but its rather slow since the
+browser has to load the page and wait for the video to be loaded in the DOM.
+
+I wanted to implement [PhantomJS](https://github.com/ariya/phantomjs) as well,
+but it [does not support the video element](https://github.com/ariya/phantomjs/issues/10839),
+and more importantly, the [development work has stopped](https://github.com/ariya/phantomjs/issues/15344).
 
 
 ### Example output

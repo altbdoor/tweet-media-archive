@@ -1,75 +1,36 @@
 #!/bin/usr/env python
 
-import urllib.request
-import urllib.parse
 import argparse
 import datetime
 import json
-import re
+import os
 import sys
+import urllib.parse
+import urllib.request
 
 from bs4 import BeautifulSoup
 
 
-class TweetWrapper(object):
-    soup = None
-    id = None
-    timestamp = None
-
-    background_image_id_re = re.compile(r'tweet_video_thumb\/(.+?).jpg')
-
-    def __init__(self, soup):
-        self.soup = soup
-
-        self.id = self._get_id()
-        self.timestamp = self._get_timestamp()
-
-    def _get_id(self):
-        id = self.soup.get('data-tweet-id')
-        return id
-
-    def _get_timestamp(self):
-        timestamp = self.soup.select_one('span._timestamp.js-short-timestamp')
-        if timestamp:
-            epoch = int(timestamp.get('data-time'))
-            return datetime.datetime.fromtimestamp(epoch)
-        else:
-            raise Exception('Unable to find timestamp in tweet!')
-
-    def get_formatted_timestamp(self):
-        return self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-
-    def get_all_image_url(self):
-        url_list = []
-        images = self.soup.select('div.AdaptiveMedia-photoContainer.js-adaptive-photo')
-
-        for i in images:
-            img_url = i.get('data-image-url')
-            url_list.append(f'{img_url}:orig')
-
-        return url_list
-
-    def get_all_gif_url(self):
-        url_list = []
-        gifs = self.soup.select('div.PlayableMedia-player')
-
-        for g in gifs:
-            g_id = re.search(self.background_image_id_re, g.get('style'))
-            if g_id:
-                g_id = g_id.group(1)
-                url_list.append(f'https://video.twimg.com/tweet_video/{g_id}.mp4')
-
-        return url_list
-
-# ========================================
-
-
 def run_scrape(
     debug=False, username='',
-    exclude_gif=False, exclude_image=False,
+    exclude_gif=False, exclude_image=False, include_video=False,
     output=None,
     min_datetime=None, max_datetime=None,
+    engine_driver_type='chrome', binary_path='', driver_path='',
 ):
+    wrapper_class = None
+    engine_driver = None
+
+    if include_video:
+        from wrappers.extended import TweetExtendedVideoWrapper, EngineDriver
+        wrapper_class = TweetExtendedVideoWrapper
+
+        engine_driver = EngineDriver(engine_driver_type, binary_path, driver_path)
+        engine_driver.start()
+    else:
+        from wrappers.basic import TweetWrapper
+        wrapper_class = TweetWrapper
+
     first_run = False
     soup = None
     next_pointer = None
@@ -126,7 +87,7 @@ def run_scrape(
         tweet_list = soup.find_all(soup_non_retweet_match)
 
         for tweet in tweet_list:
-            tweet_wrapper = TweetWrapper(tweet.div)
+            tweet_wrapper = wrapper_class(soup=tweet.div, username=username)
             is_tweet_within_date_range = True
 
             if min_datetime is not None and tweet_wrapper.timestamp < min_datetime:
@@ -155,11 +116,25 @@ def run_scrape(
                         timestamp=tweet_wrapper.get_formatted_timestamp(),
                     )
 
+                if include_video:
+                    videos = tweet_wrapper.get_all_video_url(engine_driver)
+                    dump_to_output(
+                        videos,
+                        debug=debug,
+                        id=tweet_wrapper.id,
+                        timestamp=tweet_wrapper.get_formatted_timestamp(),
+                    )
+
+            sys.stdout.flush()
+
             if is_less_than_min_datetime:
                 break
 
         if not next_pointer or is_less_than_min_datetime:
             break
+
+    if engine_driver:
+        engine_driver.stop()
 
     sys.stdout.close()
     if output is not None:
@@ -171,17 +146,27 @@ def run_scrape(
 def parse_args():
     parser = argparse.ArgumentParser(
         description=(
-            'Gets a list of URLs for images and GIFs of a twitter user. '
+            'Gets a list of URLs for images, GIFs and possibly videos of a twitter user. '
             'The URL list can then be passed to curl or wget to batch download. '
             'To note, twitter only allows a maximum of 35 iterations, which means '
             'probably not everything will be archived.'
+            '\n\n'
+            'The script is only able to scrape for videos with the help of a web browser, '
+            'and Selenium web driver, which means you need to have either '
+            'Google Chrome/Chromium or Mozilla Firefox installed, and also their '
+            'respective WebDrivers.'
             '\n\n'
             'Examples: \n'
             '- List all GIFs by user "tkmiz" from now until 28 Dec 2017, 10.34pm \n'
             '  ./%(prog)s -u tkmiz --exclude_image --min_datetime="2017-12-28 22:34:00" \n'
             '\n'
             '- List everything by user "MowtenDoo" and save it to a text file \n'
-            '  ./%(prog)s -u Mowtendoo -o example.txt'
+            '  ./%(prog)s -u Mowtendoo -o example.txt \n'
+            '\n'
+            '- List only videos by user "Mowtendoo" with Chrome. \n'
+            '  ./%(prog)s -u Mowtendoo --exclude_image --exclude_gif --include_video '
+            '--engine_driver_type=chrome --binary_path="C:\\Program Files (x86)\\Google\\Application\\chrome.exe" '
+            '--driver_path=".\\drivers\\chromedriver.exe"'
         ),
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -230,7 +215,39 @@ def parse_args():
         help='Maximum date. Format: YYYY-MM-DD hh:mm:ss',
     )
 
-    return parser.parse_args()
+    parser.add_argument(
+        '--include_video', action='store_true',
+        help='Includes videos from the result.',
+    )
+    parser.add_argument(
+        '--engine_driver_type', type=str,
+        choices=('chrome', 'firefox'), default='chrome',
+        help='The engine driver type. Defaults to "chrome".',
+    )
+    parser.add_argument(
+        '--binary_path', type=str, default=None,
+        help='The binary path to the browser executable.',
+    )
+    parser.add_argument(
+        '--driver_path', type=str, default=None,
+        help='The driver path to the browser driver executable.',
+    )
+
+    args = parser.parse_args()
+    if args.include_video:
+        if args.binary_path is None or args.driver_path is None:
+            msg = (
+                '--binary_path and --driver_path are both required '
+                'if --include_video is used.'
+            )
+            raise argparse.ArgumentTypeError(msg)
+
+        for path in (args.binary_path, args.driver_path, ):
+            if not os.path.exists(path):
+                msg = f'File not found for the path "{path}"'
+                raise argparse.ArgumentTypeError(msg)
+
+    return args
 
 
 if __name__ == '__main__':
