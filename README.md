@@ -1,4 +1,6 @@
 # tweet-media-archive
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Faltbdoor%2Ftweet-media-archive.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Faltbdoor%2Ftweet-media-archive?ref=badge_shield)
+
 
 Requires [Python 3.6.x](https://www.python.org/),
 [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/)
@@ -115,3 +117,6 @@ https://pbs.twimg.com/media/DeSdVITVMAE9qCQ.jpg:orig
 ### License
 
 GPLv3
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Faltbdoor%2Ftweet-media-archive.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Faltbdoor%2Ftweet-media-archive?ref=badge_large)
